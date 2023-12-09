@@ -1,5 +1,6 @@
---Handles all permissions
+lib.versionCheck("chickenlord01/johnspolicerework")
 
+--Handles all permissions
 lib.callback.register('policecheckaccess', function(source)
     local allowed = IsPlayerAceAllowed(source, Config.AceAccessPerm)
     return allowed
