@@ -1,5 +1,3 @@
-lib.versionCheck("chickenlord01/johnspolicerework")
-
 --Handles all permissions
 lib.callback.register('policecheckaccess', function(source)
     local allowed = IsPlayerAceAllowed(source, Config.AceAccessPerm)
@@ -71,3 +69,11 @@ AddEventHandler('removeplayerweapons', function(player)
 	TriggerClientEvent("removeplayerweapons", player)
 end)
 --End *Action server sync*
+
+--Update check
+AddEventHandler('onResourceStart', function(resource)
+    if resource == GetCurrentResourceName() and Config.CheckVersion then
+        lib.versionCheck("chickenlord01/johnspolicerework")
+    end
+end)
+--End *Update check*

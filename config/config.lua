@@ -1,6 +1,7 @@
 Config = {}
 
 Config.Closeonaction = false
+Config.CheckVersion = true
 
 --Toggles actions true/false
 Config.Actions = {

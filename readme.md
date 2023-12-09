@@ -1,6 +1,6 @@
 <h1>Johns Police Menu</h1>
 
-<h4>Created by JohnL#6869 (Discord)</h4>
+<h4>Created by notjohnl (Discord)</h4>
 
 <h4>Planned Features</h4>
 <ul>
