@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'johnspolicerework'
 description 'Police Menu for Menu servers'
-version '0.0.1'
+version '1.0.1'
 url 'https://github.com/chickenlord01/johnspolicemenu'
 author 'JohnL#6869'
 
