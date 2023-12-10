@@ -36,6 +36,7 @@ function HandleActionCommands()
         end,true)
 	end
 end
+HandleActionCommands()
 --End *Action commands*
 
 --Action server sync
