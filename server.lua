@@ -35,6 +35,11 @@ function HandleActionCommands()
             TriggerClientEvent("ToggleSpikes", source)
         end,true)
 	end
+	if Config.ActionCommands.vehicle then
+		RegisterCommand("vehiclepm",function(source)
+            TriggerClientEvent("ToggleVehicle", source)
+        end,true)
+	end
 end
 HandleActionCommands()
 --End *Action commands*
@@ -52,11 +57,13 @@ end)
 
 RegisterServerEvent('forceplayerintovehicle')
 AddEventHandler('forceplayerintovehicle', function(player)
+    Player(player).state.invehicle = true
 	TriggerClientEvent('forceplayerintovehicle', player)
 end)
 
 RegisterServerEvent('removeplayerfromvehicle')
 AddEventHandler('removeplayerfromvehicle', function(player)
+    Player(player).state.invehicle = false
 	TriggerClientEvent('removeplayerfromvehicle', player)
 end)
 

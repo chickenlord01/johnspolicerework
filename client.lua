@@ -57,7 +57,6 @@ function CreateMenu()
 		table.insert(options, #options+1, {label = 'Drop Spike', description = 'Drops/Grabs spike strips', close = Config.Closeonaction, args = {'spikes'}})
 	end
 	table.insert(options, #options+1, {label = 'Back', description = 'Back to main menu', icon = "fa-solid fa-arrow-left"})
-
 	lib.registerMenu({
 		id = 'policeactionsmenu',
 		title = 'Police Actions',
@@ -123,6 +122,11 @@ function CreateMenu()
 	end)
 
 	options = {}
+	table.insert(options, {label = 'Actions', description = 'Open action menu'})
+	table.insert(options, #options+1, {label = 'Loadouts', description = 'Open loadouts menu'})
+	if Config.ForceType == 'none' then
+		--table.insert(options, #options+1, {label = 'Settings', description = 'Back to main menu', icon = "fa-solid fa-gear"})
+	end
 	lib.registerMenu({
 		id = 'policemenu',
 		title = 'Police Menu',
@@ -135,10 +139,7 @@ function CreateMenu()
 		end,
 		onClose = function(keyPressed)
 		end,
-		options = {
-			{label = 'Actions', description = 'Open action menu'},
-			{label = 'Loadouts', description = 'Open loadouts menu'},
-		}
+		options = options
 	}, function(selected, scrollIndex, args)
 		if selected == 1 then
 			lib.showMenu("policeactionsmenu")
@@ -377,6 +378,16 @@ end
 
 function ToggleVehicle()
 	local closeplayer, distance = GetClosestPlayer()
+	if(distance ~= -1 and distance < 3) then
+		local player = Player(closeplayer).state
+		if player.invehicle then
+			TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
+		else
+			TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
+		end
+	else
+		ShowNotification("Error: No Player Near")
+	end
 end
 
 function PutInVehicle()
@@ -414,8 +425,8 @@ function HandleActionCommands()
 		end)
 	end
 	if Config.ActionCommands.vehicle then
-		RegisterNetEvent('ToggleSpikes', function()
-			ToggleSpikes()
+		RegisterNetEvent('ToggleVehicle', function()
+			ToggleVehicle()
 		end)
 	end
 end
