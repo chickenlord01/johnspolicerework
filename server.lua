@@ -1,6 +1,11 @@
 --Handles all permissions
 lib.callback.register('policecheckaccess', function(source)
     local allowed = IsPlayerAceAllowed(source, Config.AceAccessPerm)
+
+    Player(source).state.invehicle = false
+    Player(source).state.dragged = false
+    Player(source).state.cuffed = false
+
     return allowed
 end)
 lib.callback.register('policegetloadouts', function(source)
@@ -47,11 +52,13 @@ HandleActionCommands()
 --Action server sync
 RegisterServerEvent('cuffplayer')
 AddEventHandler('cuffplayer', function(player)
+    Player(source).state.cuffed = not Player(source).state.cuffed
 	TriggerClientEvent('cuffplayer', player)
 end)
 
 RegisterServerEvent('dragplayer')
 AddEventHandler('dragplayer', function(player)
+    Player(source).state.dragged = not Player(source).state.dragged
 	TriggerClientEvent('dragplayer', player, source)
 end)
 
