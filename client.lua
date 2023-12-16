@@ -1,5 +1,5 @@
 --DONT CHANGE THESE UNLESS YOU KNOW WHAT YOU ARE DOING
-local menu, player, loadouts, access, actions = {}, nil, Config.Loadouts, false, Config.Actions
+local menu, loadouts, access, actions = {}, Config.Loadouts, false, Config.Actions
 local cuffed, dragged, isdragging, plhplayer = false, false, false, 0
 
 menu.position, menu.type = 'top-right', 'menu'
@@ -30,7 +30,6 @@ end)
 Citizen.CreateThread(function()
     while true do
         Wait(0)
-        player = PlayerPedId()
         HandleDrag()
     end
 end)
@@ -150,7 +149,7 @@ function CreateMenu()
 end
 
 function RefreshPerms()
-    if NetworkIsPlayerActive(PlayerId()) then
+    if NetworkIsPlayerActive(cache.playerId) then
 		access = lib.callback.await("policecheckaccess")
 		loadouts = lib.callback.await("policegetloadouts")
     end
@@ -182,20 +181,20 @@ function LoadoutOptions()
 end
 
 function HandleWeapons(weapons)
-    RemoveAllPedWeapons(player, true)
+    RemoveAllPedWeapons(cache.ped, true)
     local spawn = weapons.spawn
     local attach = weapons.attachments
 	if spawn then
 		if attach[1] then
         	for _,v in pairs(attach) do
         		for _,value in pairs(spawn) do
-        		    GiveWeaponToPed(player, GetHashKey(value.spawn), 9999, false, false)
-        	    	GiveWeaponComponentToPed(player, GetHashKey(value.spawn), GetHashKey(v))
+        		    GiveWeaponToPed(cache.ped, GetHashKey(value.spawn), 9999, false, false)
+        	    	GiveWeaponComponentToPed(cache.ped, GetHashKey(value.spawn), GetHashKey(v))
         		end
 			end
 		else
 			for _,value in pairs(spawn) do
-				GiveWeaponToPed(player, GetHashKey(value.spawn), 9999, false, false)
+				GiveWeaponToPed(cache.ped, GetHashKey(value.spawn), 9999, false, false)
 			end
 		end
     else
@@ -215,7 +214,7 @@ function PlayerCuffed()
 		dragged = false
 		cuffed = false
 		Citizen.Wait(100)
-		ClearPedTasksImmediately(player)
+		ClearPedTasksImmediately(cache.ped)
 	end
 end
 
@@ -232,16 +231,16 @@ end)
 
 RegisterNetEvent('removeplayerweapons')
 AddEventHandler('removeplayerweapons', function()
-    RemoveAllPedWeapons(player, true)
+    RemoveAllPedWeapons(cache.ped, true)
 end)
 
 RegisterNetEvent('forceplayerintovehicle')
 AddEventHandler('forceplayerintovehicle', function()
 	if cuffed then
-		local pos = GetEntityCoords(player)
-		local playercoords = GetOffsetFromEntityInWorldCoords(player, 0.0, 20.0, 0.0)
+		local pos = GetEntityCoords(cache.ped)
+		local playercoords = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 20.0, 0.0)
 
-		local rayHandle = CastRayPointToPoint(pos.x, pos.y, pos.z, playercoords.x, playercoords.y, playercoords.z, 10, GetPlayerPed(-1), 0)
+		local rayHandle = CastRayPointToPoint(pos.x, pos.y, pos.z, playercoords.x, playercoords.y, playercoords.z, 10, cache.ped, 0)
 		local _, _, _, _, vehicleHandle = GetRaycastResult(rayHandle)
 
 		if vehicleHandle ~= nil then
@@ -254,11 +253,11 @@ RegisterNetEvent('removeplayerfromvehicle')
 AddEventHandler('removeplayerfromvehicle', function(otherplayer)
 	local ped = GetPlayerPed(otherplayer)
 	ClearPedTasksImmediately(ped)
-	playercoords = GetEntityCoords(player, true)
+	playercoords = GetEntityCoords(cache.ped, true)
 	local xnew = playercoords.x+2
 	local ynew = playercoords.y+2
 
-	SetEntityCoords(player, xnew, ynew, playercoords.z)
+	SetEntityCoords(cache.ped, xnew, ynew, playercoords.z)
 end)
 
 RegisterNetEvent('cuffplayer')
@@ -295,42 +294,33 @@ function HandleDrag()
 			while not HasAnimDictLoaded('mp_arresting') do
                 Citizen.Wait(0)
 			end
-			while IsPedBeingStunned(player, false) do
-				ClearPedTasksImmediately(player)
+			while IsPedBeingStunned(cache.ped, false) do
+				ClearPedTasksImmediately(cache.ped)
 			end
-			TaskPlayAnim(player, 'mp_arresting', 'idle', 8.0, -8, -1, 16, 0, 0, 0, 0)
+			TaskPlayAnim(cache.ped, 'mp_arresting', 'idle', 8.0, -8, -1, 16, 0, 0, 0, 0)
             DisableControls()
 		end
-		if IsPlayerDead(PlayerPedId()) then
+		if IsPlayerDead(cache.ped) then
 			cuffed = false
 			isdragging = false
             dragged = false
 		end
 		if isdragging then
 			local ped = GetPlayerPed(GetPlayerFromServerId(plhplayer))
-			AttachEntityToEntity(player, ped, 4103, 11816, 0.48, 0.00, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+			AttachEntityToEntity(cache.ped, ped, 4103, 11816, 0.48, 0.00, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
 			dragged = true
 		else
-			if not IsPedInParachuteFreeFall(player) and dragged then
+			if not IsPedInParachuteFreeFall(cache.ped) and dragged then
 				dragged = false
-				DetachEntity(player, true, false)
+				DetachEntity(cache.ped, true, false)
 			end
 		end
 	end
 end
 
 
-function GetPlayers()
-	local players = {}
-	for i, player in ipairs(GetActivePlayers()) do
-		local ped = GetPlayerPed(player)
-		table.insert(players, player)
-	end
-	return players
-end
-
 function GetClosestPlayer()
-	local closestPlayer,closestPed,closestDistance = lib.GetClosestPlayer(GetEntityCoords(player, false), 3)
+	local closestPlayer,closestPed,closestDistance = lib.GetClosestPlayer(GetEntityCoords(cache.ped, false), 3)
 	
 	if closestPlayer then
 		closestDistance = #(GetEntityCoords(cache.playerId, false) - closestDistance)
@@ -372,8 +362,7 @@ end
 function ToggleVehicle()
 	local closeplayer, distance = GetClosestPlayer()
 	if(distance ~= -1 and distance < 3) then
-		local playerstate = Player(GetPlayerServerId(closeplayer)).state
-		if playerstate.invehicle then
+		if Player(GetPlayerServerId(closeplayer)).state.invehicle then
 			TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
 		else
 			TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
