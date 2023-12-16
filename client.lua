@@ -330,21 +330,14 @@ function GetPlayers()
 end
 
 function GetClosestPlayer()
-	local players = GetPlayers()
-	local closestDistance,closestPlayer = -1, -1
-	local playercoords = GetEntityCoords(player, 0)
+	local closestPlayer,closestPed,closestDistance = lib.GetClosestPlayer(GetEntityCoords(player, false), 3)
 	
-	for i,value in ipairs(players) do
-		local target = GetPlayerPed(value)
-		if(target ~= player) then
-			local targetCoords = GetEntityCoords(GetPlayerPed(value), 0)
-			local distance = Vdist(targetCoords["x"], targetCoords["y"], targetCoords["z"], playercoords.x, playercoords.y, playercoords.z)
-			if(closestDistance == -1 or closestDistance > distance) then
-				closestPlayer = value
-				closestDistance = distance
-			end
-		end
+	if closestPlayer then
+		closestDistance = #(GetEntityCoords(cache.playerId, false) - closestDistance)
+	else
+		closestPlayer, closestDistance = -1,-1
 	end
+
 	return closestPlayer, closestDistance
 end
 
@@ -379,8 +372,8 @@ end
 function ToggleVehicle()
 	local closeplayer, distance = GetClosestPlayer()
 	if(distance ~= -1 and distance < 3) then
-		local player = Player(closeplayer).state
-		if player.invehicle then
+		local playerstate = Player(GetPlayerServerId(closeplayer)).state
+		if playerstate.invehicle then
 			TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
 		else
 			TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
