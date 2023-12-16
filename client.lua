@@ -46,8 +46,7 @@ function CreateMenu()
 		table.insert(options, #options+1, {label = 'Drag', description = 'Drags closest player', close = Config.Closeonaction, args = {'drag'}})
 	end
 	if actions.removefromvehicle then
-		table.insert(options, #options+1, {label = 'Place in Vehicle', description = 'Places closest player in vehicle', close = Config.Closeonaction, args = {'placeinveh'}})
-		table.insert(options, #options+1, {label = 'Remove from Vehicle', description = 'Removes closest player in vehicle', close = Config.Closeonaction, args = {'removefromveh'}})
+		table.insert(options, #options+1, {label = 'Place/Remove in Vehicle', description = 'Places/Removes closest player in vehicle', close = Config.Closeonaction, args = {'vehicle'}})
 	end
 	if actions.removeweapons then
 		table.insert(options, #options+1, {label = 'Remove Weapons', description = 'Removes all weapons from player', close = Config.Closeonaction, args = {'removeweapons'}})
@@ -78,10 +77,8 @@ function CreateMenu()
 				ToggleCuffs()
 			elseif args[1] == 'drag' then
 				ToggleDrag()
-			elseif args[1] == 'placeinveh' then
-				PutInVehicle()
-			elseif args[1] == 'removefromveh' then
-				UnseatVehicle()
+			elseif args[1] == 'vehicle' then
+				ToggleVehicle()
 			elseif args[1] == 'removeweapons' then
 				RemoveWeapons()
 			elseif args[1] == 'spikes' then
@@ -348,7 +345,11 @@ end
 function ToggleDrag()
 	local closeplayer, distance = GetClosestPlayer()
 	if(distance ~= -1 and distance < 3) then
-		TriggerServerEvent("dragplayer", GetPlayerServerId(closeplayer))
+		if Player(GetPlayerServerId(closeplayer)).state.cuffed then
+			TriggerServerEvent("dragplayer", GetPlayerServerId(closeplayer))
+		else
+			ShowNotification("Error: Player not cuffed")
+		end
 	else
 		ShowNotification("Error: No Player Near")
 	end
@@ -357,29 +358,15 @@ end
 function ToggleVehicle()
 	local closeplayer, distance = GetClosestPlayer()
 	if(distance ~= -1 and distance < 3) then
-		if Player(GetPlayerServerId(closeplayer)).state.invehicle then
-			TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
+		if Player(GetPlayerServerId(closeplayer)).state.cuffed then
+			if Player(GetPlayerServerId(closeplayer)).state.invehicle then
+				TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
+			else
+				TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
+			end
 		else
-			TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
+			ShowNotification("Error: Player not cuffed")
 		end
-	else
-		ShowNotification("Error: No Player Near")
-	end
-end
-
-function PutInVehicle()
-	local closeplayer, distance = GetClosestPlayer()
-	if(distance ~= -1 and distance < 3) then
-		TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
-	else
-		ShowNotification("Error: No Player Near")
-	end
-end
-
-function UnseatVehicle()
-	local closeplayer, distance = GetClosestPlayer()
-	if(distance ~= -1 and distance < 3) then
-		TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
 	else
 		ShowNotification("Error: No Player Near")
 	end
