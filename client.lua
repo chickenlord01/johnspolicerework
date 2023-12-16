@@ -237,14 +237,9 @@ end)
 RegisterNetEvent('forceplayerintovehicle')
 AddEventHandler('forceplayerintovehicle', function()
 	if cuffed then
-		local pos = GetEntityCoords(cache.ped)
-		local playercoords = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 20.0, 0.0)
-
-		local rayHandle = CastRayPointToPoint(pos.x, pos.y, pos.z, playercoords.x, playercoords.y, playercoords.z, 10, cache.ped, 0)
-		local _, _, _, _, vehicleHandle = GetRaycastResult(rayHandle)
-
+		local vehicleHandle, vehicleCoords = lib.getClosestVehicle(GetEntityCoords(cache.ped), 2)
 		if vehicleHandle ~= nil then
-			SetPedIntoVehicle(player, vehicleHandle, 2)
+			SetPedIntoVehicle(cache.ped, vehicleHandle, 2)
 		end
 	end
 end)
@@ -323,7 +318,7 @@ function GetClosestPlayer()
 	local closestPlayer,closestPed,closestDistance = lib.GetClosestPlayer(GetEntityCoords(cache.ped, false), 3)
 	
 	if closestPlayer then
-		closestDistance = #(GetEntityCoords(cache.playerId, false) - closestDistance)
+		closestDistance = #(GetEntityCoords(cache.ped, false) - closestDistance)
 	else
 		closestPlayer, closestDistance = -1,-1
 	end
