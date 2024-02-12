@@ -2,9 +2,9 @@
 lib.callback.register('policecheckaccess', function(source)
     local allowed = IsPlayerAceAllowed(source, Config.AceAccessPerm)
 
-    Player(source).state.invehicle = false
-    Player(source).state.dragged = false
-    Player(source).state.cuffed = false
+    --Player(source).state.invehicle = false
+    --Player(source).state.dragged = false
+    --Player(source).state.cuffed = false
 
     return allowed
 end)
@@ -60,6 +60,16 @@ RegisterServerEvent('dragplayer')
 AddEventHandler('dragplayer', function(player)
     Player(source).state.dragged = not Player(source).state.dragged
 	TriggerClientEvent('dragplayer', player, source)
+end)
+
+RegisterServerEvent("pm:s:vehicletoggle")
+AddEventHandler("pm:s:vehicletoggle", function(player)
+    if Player(player).state.invehicle == nil then
+        Player(player).state.invehicle = false
+    end
+
+    Player(player).state.invehicle = not Player(player).state.invehicle
+	TriggerClientEvent('pm:c:vehicletoggle', player)
 end)
 
 RegisterServerEvent('forceplayerintovehicle')

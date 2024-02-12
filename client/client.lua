@@ -1,6 +1,6 @@
 --DONT CHANGE THESE UNLESS YOU KNOW WHAT YOU ARE DOING
 local menu, loadouts, access, actions = {}, Config.Loadouts, false, Config.Actions
-local cuffed, dragged, isdragging, plhplayer = false, false, false, 0
+local cuffed, invehicle, dragged, isdragging, plhplayer = false, false, false, false, 0
 
 menu.position, menu.type = 'top-right', 'menu'
 
@@ -231,6 +231,25 @@ AddEventHandler('removeplayerweapons', function()
     RemoveAllPedWeapons(cache.ped, true)
 end)
 
+
+RegisterNetEvent('pm:c:vehicletoggle')
+AddEventHandler('pm:c:vehicletoggle', function()
+	if cuffed and not invehicle then
+		local vehicleHandle, vehicleCoords = lib.getClosestVehicle(GetEntityCoords(cache.ped), 2)
+		if vehicleHandle ~= nil then
+			SetPedIntoVehicle(cache.ped, vehicleHandle, 2)
+		end
+	else
+		ClearPedTasksImmediately(cache.ped)
+		playercoords = GetEntityCoords(cache.ped, true)
+		local xnew = playercoords.x+2
+		local ynew = playercoords.y+2
+	
+		SetEntityCoords(cache.ped, xnew, ynew, playercoords.z)
+	end
+	invehicle = not invehicle
+end)
+
 RegisterNetEvent('forceplayerintovehicle')
 AddEventHandler('forceplayerintovehicle', function()
 	if cuffed then
@@ -345,11 +364,7 @@ end
 function ToggleDrag()
 	local closeplayer, distance = GetClosestPlayer()
 	if(distance ~= -1 and distance < 3) then
-		if Player(GetPlayerServerId(closeplayer)).state.cuffed then
-			TriggerServerEvent("dragplayer", GetPlayerServerId(closeplayer))
-		else
-			ShowNotification("Error: Player not cuffed")
-		end
+		TriggerServerEvent("dragplayer", GetPlayerServerId(closeplayer))
 	else
 		ShowNotification("Error: No Player Near")
 	end
@@ -358,15 +373,7 @@ end
 function ToggleVehicle()
 	local closeplayer, distance = GetClosestPlayer()
 	if(distance ~= -1 and distance < 3) then
-		if Player(GetPlayerServerId(closeplayer)).state.cuffed then
-			if Player(GetPlayerServerId(closeplayer)).state.invehicle then
-				TriggerServerEvent("removeplayerfromvehicle", GetPlayerServerId(closeplayer))
-			else
-				TriggerServerEvent("forceplayerintovehicle", GetPlayerServerId(closeplayer))
-			end
-		else
-			ShowNotification("Error: Player not cuffed")
-		end
+		TriggerServerEvent("pm:s:vehicletoggle", GetPlayerServerId(closeplayer))
 	else
 		ShowNotification("Error: No Player Near")
 	end

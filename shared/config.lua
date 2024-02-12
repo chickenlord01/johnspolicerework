@@ -19,10 +19,10 @@ Config.Actions = {
 
 --If any of these are toggled to true use ace permissions for the commands EX: add_ace identifier.steam:1100001155f7f59 command.cuff allow #John
 Config.ActionCommands = {
-	cuffing = false,  --Permission (command.cuff)
-	dragging = false, --Permission (command.drag)
-	vehicle = false,  --Permission (command.vehiclepm)
-	spikes = false    --Permission (command.spikes)
+	cuffing = true,  --Permission (command.cuff)
+	dragging = true, --Permission (command.drag)
+	vehicle = true,  --Permission (command.vehiclepm)
+	spikes = true    --Permission (command.spikes)
 }
 
 --You can add more command strings to this. For example /hu is "hu" in the handsup list.

@@ -10,18 +10,15 @@ author 'JohnL#6869'
 
 shared_scripts {
     '@ox_lib/init.lua',
-	'config/weapons.lua',
-	'config/config.lua'
+	'shared/*.lua'
 }
 
 client_scripts {
-	'spikestrips/client.lua',
-	'client.lua'
+	'client/*.lua'
 }
 
 server_scripts {
-	'spikestrips/server.lua',
-	'server.lua'
+	'server/*.lua'
 }
 
 dependencies {
