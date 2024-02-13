@@ -2,21 +2,69 @@
 local menu, loadouts, access, actions = {}, Config.Loadouts, false, Config.Actions
 local cuffed, invehicle, dragged, isdragging, plhplayer = false, false, false, false, 0
 
-menu.position, menu.type = 'top-right', 'menu'
+
+
+
+menu.position, menu.type = 'top-right', Config.ForceType
+if menu.type == 'none' then
+	menu.allowchange = true
+	--[[lib.callback('getPlayerMenuSettings', function(data)
+		menu.position = data.position or 'top-right'
+		menu.type = data.type or Config.ForceType
+	end)]]
+end
+
+function SettingsMenu()
+	lib.registerContext({
+		id = 'policemenusettings',
+		title = 'Menu settings',
+		options = {
+			{
+				title = 'Change menu',
+				description = 'Current menu: '..menu.type,
+				onSelect = function()
+					local input = lib.inputDialog("Settings", {
+						{type = 'select', label = 'Select menu type', required = true, options = {
+							{
+								value = 'menu',
+								label = 'menu'
+							},
+							{
+								value = 'context',
+								label = 'context'
+							},
+							{
+								value = 'radial',
+								label = 'radial'
+							},
+						}, default = 'menu', clearable = false}
+					})
+					if input then
+						if input[1] then
+							menu.type = tostring(input[1])
+							UpdateMenu()
+							--lib.callback('updateMenuType', )
+						end
+					end
+				end
+			}
+		}
+	})
+end
 
 --Thread(s) to manage menu and handle permission setting upon script start. Also handles player actions.
 Citizen.CreateThread(function()
-    CreateMenu()
+    UpdateMenu()
 
     while not NetworkIsPlayerActive(PlayerId()) do
         Wait(0)
     end
     RefreshPerms()
 
-    while true do
+    --[[while true do
         --AllMenu()
         Wait(0)
-    end
+    end]]
 end)
 Citizen.CreateThread(function()
     while not NetworkIsPlayerActive(PlayerId()) do
@@ -37,112 +85,254 @@ end)
 
 
 --Menu creation and permissions
+function UpdateMenu()
+	CreateMenu()
+	ActionsMenuSetup()
+	LoadoutsMenuSetup()
+	SettingsMenu()
+end
+function ActionsMenuSetup()
+	local options = {}
+	if menu.type == 'menu' or menu.type == 'none' then
+		if actions.cuffing then
+			table.insert(options, #options+1, {label = 'Cuff', description = 'Cuffs closest player', close = Config.Closeonaction, args = {'cuff'}})
+		end
+		if actions.dragging then
+			table.insert(options, #options+1, {label = 'Drag', description = 'Drags closest player', close = Config.Closeonaction, args = {'drag'}})
+		end
+		if actions.removefromvehicle then
+			table.insert(options, #options+1, {label = 'Place/Remove in Vehicle', description = 'Places/Removes closest player in vehicle', close = Config.Closeonaction, args = {'vehicle'}})
+		end
+		if actions.removeweapons then
+			table.insert(options, #options+1, {label = 'Remove Weapons', description = 'Removes all weapons from player', close = Config.Closeonaction, args = {'removeweapons'}})
+		end
+		if actions.spikes then
+			table.insert(options, #options+1, {label = 'Drop Spike', description = 'Drops/Grabs spike strips', close = Config.Closeonaction, args = {'spikes'}})
+		end
+		table.insert(options, #options+1, {label = 'Back', description = 'Back to main menu', icon = "fa-solid fa-arrow-left"})
+		lib.registerMenu({
+			id = 'policeactionsmenu',
+			title = 'Police Actions',
+			position = menu.position,
+			onSideScroll = function(selected, scrollIndex, args)
+			end,
+			onSelected = function(selected, secondary, args)
+			end,
+			onCheck = function(selected, checked, args)
+			end,
+			onClose = function(keyPressed)
+				if keyPressed then
+					lib.showMenu("policemenu")
+				end
+			end,
+			options = options
+		}, function(selected, scrollIndex, args)
+			if args then
+				if args[1] == 'cuff' then
+					ToggleCuffs()
+				elseif args[1] == 'drag' then
+					ToggleDrag()
+				elseif args[1] == 'vehicle' then
+					ToggleVehicle()
+				elseif args[1] == 'removeweapons' then
+					RemoveWeapons()
+				elseif args[1] == 'spikes' then
+					ToggleSpikes()
+				end
+			else
+				lib.showMenu("policemenu")
+			end
+		end)
+	elseif menu.type == 'context' then
+		if actions.cuffing then
+			table.insert(options, #options+1, {title = 'Cuff', description = 'Cuffs closest player',onSelect = function()
+				ToggleCuffs()
+				if not Config.Closeonaction then
+					lib.showContext('policeactionscontext')
+				end
+			end})
+		end
+		if actions.dragging then
+			table.insert(options, #options+1, {title = 'Drag', description = 'Drags closest player',onSelect = function()
+				ToggleDrag()
+				if not Config.Closeonaction then
+					lib.showContext('policeactionscontext')
+				end
+			end})
+		end
+		if actions.removefromvehicle then
+			table.insert(options, #options+1, {title = 'Place/Remove in Vehicle', description = 'Places/Removes closest player in vehicle',onSelect = function()
+				ToggleVehicle()
+				if not Config.Closeonaction then
+					lib.showContext('policeactionscontext')
+				end
+			end})
+		end
+		if actions.removeweapons then
+			table.insert(options, #options+1, {title = 'Remove Weapons', description = 'Removes all weapons from player',onSelect = function()
+				RemoveWeapons()
+				if not Config.Closeonaction then
+					lib.showContext('policeactionscontext')
+				end
+			end})
+		end
+		if actions.spikes then
+			table.insert(options, #options+1, {title = 'Drop Spike', description = 'Drops/Grabs spike strips',onSelect = function()
+				ToggleSpikes()
+				if not Config.Closeonaction then
+					lib.showContext('policeactionscontext')
+				end
+			end})
+		end
+		lib.registerContext({
+			id = 'policeactionscontext',
+			title = 'Police Actions',
+			menu = 'policecontext',
+			options = options
+		})
+	elseif menu.type == 'radial' then
+		if actions.cuffing then
+			table.insert(options, #options+1, {label = 'Cuff',onSelect = function()
+				ToggleCuffs()
+			end})
+		end
+		if actions.dragging then
+			table.insert(options, #options+1, {label = 'Drag', onSelect = function()
+				ToggleDrag()
+			end})
+		end
+		if actions.removefromvehicle then
+			table.insert(options, #options+1, {label = 'Place/Remove in Vehicle', onSelect = function()
+				ToggleVehicle()
+			end})
+		end
+		if actions.removeweapons then
+			table.insert(options, #options+1, {label = 'Remove Weapons', onSelect = function()
+				RemoveWeapons()
+			end})
+		end
+		if actions.spikes then
+			table.insert(options, #options+1, {label = 'Drop Spike', onSelect = function()
+				ToggleSpikes()
+			end})
+		end
+		lib.registerRadial({
+			id = "policeactionsradial",
+			items = options,
+			keepOpen = not Config.Closeonaction
+		})
+	end
+end
+
+function LoadoutsMenuSetup()
+	local options = {}
+	options = LoadoutOptions()
+	if menu.type == 'menu' or menu.type == 'none' then
+		table.insert(options, {label = 'Back', description = 'Back to main menu', icon = "fa-solid fa-arrow-left"})
+		lib.registerMenu({
+			id = 'policeloadoutsmenu',
+			title = 'Police Loadouts',
+			position = menu.position,
+			onSideScroll = function(selected, scrollIndex, args)
+			end,
+			onSelected = function(selected, secondary, args)
+			end,
+			onCheck = function(selected, checked, args)
+			end,
+			onClose = function(keyPressed)
+				if keyPressed then
+					lib.showMenu("policemenu")
+				end
+			end,
+			options = options
+		}, function(selected, scrollIndex, args)
+			if args then
+				HandleWeapons(args)
+			else
+				lib.showMenu("policemenu")
+			end
+		end)
+	elseif menu.type == 'context' then
+		lib.registerContext({
+			id = 'policeloadoutscontext',
+			title = 'Police Loadouts',
+			menu = 'policecontext',
+			options = options
+		})
+	elseif menu.type == 'radial' then
+		lib.registerRadial({
+			id = "policeloadoutsradial",
+			items = options,
+			keepOpen = not Config.Closeonaction
+		})
+	end
+end
+
 function CreateMenu()
 	local options = {}
-	if actions.cuffing then
-		table.insert(options, #options+1, {label = 'Cuff', description = 'Cuffs closest player', close = Config.Closeonaction, args = {'cuff'}})
-	end
-	if actions.dragging then
-		table.insert(options, #options+1, {label = 'Drag', description = 'Drags closest player', close = Config.Closeonaction, args = {'drag'}})
-	end
-	if actions.removefromvehicle then
-		table.insert(options, #options+1, {label = 'Place/Remove in Vehicle', description = 'Places/Removes closest player in vehicle', close = Config.Closeonaction, args = {'vehicle'}})
-	end
-	if actions.removeweapons then
-		table.insert(options, #options+1, {label = 'Remove Weapons', description = 'Removes all weapons from player', close = Config.Closeonaction, args = {'removeweapons'}})
-	end
-	if actions.spikes then
-		table.insert(options, #options+1, {label = 'Drop Spike', description = 'Drops/Grabs spike strips', close = Config.Closeonaction, args = {'spikes'}})
-	end
-	table.insert(options, #options+1, {label = 'Back', description = 'Back to main menu', icon = "fa-solid fa-arrow-left"})
-	lib.registerMenu({
-		id = 'policeactionsmenu',
-		title = 'Police Actions',
-		position = menu.position,
-		onSideScroll = function(selected, scrollIndex, args)
-		end,
-		onSelected = function(selected, secondary, args)
-		end,
-		onCheck = function(selected, checked, args)
-		end,
-		onClose = function(keyPressed)
-			if keyPressed then
-				lib.showMenu("policemenu")
+	if menu.type == 'menu' or menu.type == 'none' then
+		table.insert(options, {label = 'Actions', description = 'Open action menu'})
+		table.insert(options, #options+1, {label = 'Loadouts', description = 'Open loadouts menu'})
+		table.insert(options, #options+1, {label = 'Settings', description = 'Settings', icon = "fa-solid fa-gear", disabled = not menu.allowchange, args = {menu = 'settings'}})
+		lib.registerMenu({
+			id = 'policemenu',
+			title = 'Police Menu',
+			position = menu.position,
+			onSideScroll = function(selected, scrollIndex, args)
+			end,
+			onSelected = function(selected, secondary, args)
+			end,
+			onCheck = function(selected, checked, args)
+			end,
+			onClose = function(keyPressed)
+			end,
+			options = options
+		}, function(selected, scrollIndex, args)
+			if selected == 1 then
+				lib.showMenu("policeactionsmenu")
+			elseif selected == 2 then
+				lib.showMenu("policeloadoutsmenu")
 			end
-		end,
-		options = options
-	}, function(selected, scrollIndex, args)
-		if args then
-			if args[1] == 'cuff' then
-				ToggleCuffs()
-			elseif args[1] == 'drag' then
-				ToggleDrag()
-			elseif args[1] == 'vehicle' then
-				ToggleVehicle()
-			elseif args[1] == 'removeweapons' then
-				RemoveWeapons()
-			elseif args[1] == 'spikes' then
-				ToggleSpikes()
+			if args then
+				lib.showContext('policemenusettings')
 			end
-		else
-			lib.showMenu("policemenu")
+		end)
+	elseif menu.type == 'context' then
+		table.insert(options, {title = 'Actions', description = 'Open action menu', menu = 'policeactionscontext'})
+		table.insert(options, #options+1, {title = 'Loadouts', description = 'Open loadouts menu', menu = 'policeloadoutscontext'})
+		table.insert(options, #options+1, {title = 'Settings', description = 'Settings', icon = "fa-solid fa-gear", disabled = not menu.allowchange, menu = 'policemenusettings'})
+		lib.registerContext({
+			id = 'policecontext',
+			title = 'Police Menu',
+			options = options
+		})
+	elseif menu.type == 'radial' then
+		table.insert(options, {label = 'Actions', menu = 'policeactionsradial'})
+		table.insert(options, #options+1, {label = 'Loadouts', menu = 'policeloadoutsradial'})
+		if menu.allowchange then
+			table.insert(options, #options+1, {label = 'Settings', icon = "fa-solid fa-gear", onSelect = function()
+				lib.showContext('policemenusettings')
+			end})
 		end
-	end)
+		lib.registerRadial({
+			id = "policeradial",
+			items = options,
+			keepOpen = not Config.Closeonaction
+		})
+		lib.addRadialItem({
+			{
+				label = 'Police Menu',
+				menu = 'policeradial'
+			}
+		})
+	end
 
-	options = {}
-	options = LoadoutOptions()
-	table.insert(options, {
-		label = 'Back', description = 'Back to main menu', icon = "fa-solid fa-arrow-left"})
-	lib.registerMenu({
-		id = 'policeloadoutsmenu',
-		title = 'Police Loadouts',
-		position = menu.position,
-		onSideScroll = function(selected, scrollIndex, args)
-		end,
-		onSelected = function(selected, secondary, args)
-		end,
-		onCheck = function(selected, checked, args)
-		end,
-		onClose = function(keyPressed)
-			if keyPressed then
-				lib.showMenu("policemenu")
-			end
-		end,
-		options = options
-	}, function(selected, scrollIndex, args)
-		if args then
-			HandleWeapons(args)
-		else
-			lib.showMenu("policemenu")
+	if not menu.init then
+		menu.init = true
+		if menu.type == 'none' then
+			menu.type = 'menu'
 		end
-	end)
-
-	options = {}
-	table.insert(options, {label = 'Actions', description = 'Open action menu'})
-	table.insert(options, #options+1, {label = 'Loadouts', description = 'Open loadouts menu'})
-	if Config.ForceType == 'none' then
-		--table.insert(options, #options+1, {label = 'Settings', description = 'Back to main menu', icon = "fa-solid fa-gear"})
 	end
-	lib.registerMenu({
-		id = 'policemenu',
-		title = 'Police Menu',
-		position = menu.position,
-		onSideScroll = function(selected, scrollIndex, args)
-		end,
-		onSelected = function(selected, secondary, args)
-		end,
-		onCheck = function(selected, checked, args)
-		end,
-		onClose = function(keyPressed)
-		end,
-		options = options
-	}, function(selected, scrollIndex, args)
-		if selected == 1 then
-			lib.showMenu("policeactionsmenu")
-		elseif selected == 2 then
-			lib.showMenu("policeloadoutsmenu")
-		end
-	end)
 end
 
 function RefreshPerms()
@@ -152,13 +342,21 @@ function RefreshPerms()
     end
 end
 
-RegisterCommand("openpm", function()
+function FuckingCommand()
     if access then
-		lib.showMenu("policemenu")
+		if menu.type == 'menu' or menu.type == 'none' then
+			lib.showMenu("policemenu")
+		elseif menu.type == 'context' then
+			lib.showContext('policecontext')
+		elseif menu.type == 'radial' then
+			ShowNotification("Current menu is Radial; please use the radial key.")
+		end
 	else
 		ShowNotification("Error: No permission")
     end
-end)
+end
+
+RegisterCommand("openpm", FuckingCommand,false)
 --End *Menu creation and permissions*
 
 
@@ -167,11 +365,28 @@ function LoadoutOptions()
 	local options = {}
     for k, v in pairs(loadouts) do
         if v.access then
-			table.insert(options, #options+1, {
-				label = v.name,
-				description = "Spawn loadout: "..v.name,
-				args = v.weapons
-			})
+			if menu.type == 'menu' or menu.type == 'none' then
+				table.insert(options, #options+1, {
+					label = v.name,
+					description = "Spawn loadout: "..v.name,
+					args = v.weapons
+				})
+			elseif menu.type == 'context' then
+				table.insert(options, #options+1, {
+					title = v.name,
+					description = "Spawn loadout: "..v.name,
+					onSelect = function()
+						HandleWeapons(v.weapons)
+					end
+				})
+			elseif menu.type == 'radial' then
+				table.insert(options, #options+1, {
+					label = v.name,
+					onSelect = function()
+						HandleWeapons(v.weapons)
+					end
+				})
+			end
         end
     end
 	return options
