@@ -5,15 +5,46 @@ local cuffed, invehicle, dragged, isdragging, plhplayer = false, false, false, f
 
 
 
-menu.position, menu.type = 'top-right', Config.ForceType
-if menu.type == 'none' then
-	menu.allowchange = true
-	--[[lib.callback('getPlayerMenuSettings', function(data)
-		menu.position = data.position or 'top-right'
-		menu.type = data.type or Config.ForceType
-	end)]]
-end
 
+
+--Thread(s) to manage menu and handle permission setting upon script start. Also handles player actions.
+Citizen.CreateThread(function()
+
+    while not NetworkIsPlayerActive(PlayerId()) do
+        Wait(0)
+    end
+    RefreshPerms()
+	
+	menu = lib.callback.await('getPlayerData')
+	if not menu.private then
+		menu.private = {}
+	end
+	if Config.ForceType == 'none' then
+		menu.private.allowchange = true
+	else
+		menu.type = Config.ForceType
+	end
+    UpdateMenu()
+end)
+Citizen.CreateThread(function()
+    while not NetworkIsPlayerActive(PlayerId()) do
+        Wait(0)
+	end
+	while true do
+		Wait(10000)
+		RefreshPerms()
+	end
+end)
+Citizen.CreateThread(function()
+    while true do
+        Wait(0)
+        HandleDrag()
+    end
+end)
+--End *Thread(s) to manage menu and handle permission setting upon script start. Also handles player actions.*
+
+
+--Menu creation and permissions
 function SettingsMenu()
 	lib.registerContext({
 		id = 'policemenusettings',
@@ -43,6 +74,7 @@ function SettingsMenu()
 						if input[1] then
 							menu.type = tostring(input[1])
 							UpdateMenu()
+							lib.callback.await("updatePlayerData",false,menu)
 							--lib.callback('updateMenuType', )
 						end
 					end
@@ -51,40 +83,6 @@ function SettingsMenu()
 		}
 	})
 end
-
---Thread(s) to manage menu and handle permission setting upon script start. Also handles player actions.
-Citizen.CreateThread(function()
-    UpdateMenu()
-
-    while not NetworkIsPlayerActive(PlayerId()) do
-        Wait(0)
-    end
-    RefreshPerms()
-
-    --[[while true do
-        --AllMenu()
-        Wait(0)
-    end]]
-end)
-Citizen.CreateThread(function()
-    while not NetworkIsPlayerActive(PlayerId()) do
-        Wait(0)
-	end
-	while true do
-		Wait(10000)
-		RefreshPerms()
-	end
-end)
-Citizen.CreateThread(function()
-    while true do
-        Wait(0)
-        HandleDrag()
-    end
-end)
---End *Thread(s) to manage menu and handle permission setting upon script start. Also handles player actions.*
-
-
---Menu creation and permissions
 function UpdateMenu()
 	CreateMenu()
 	ActionsMenuSetup()
@@ -273,7 +271,9 @@ function CreateMenu()
 	if menu.type == 'menu' or menu.type == 'none' then
 		table.insert(options, {label = 'Actions', description = 'Open action menu'})
 		table.insert(options, #options+1, {label = 'Loadouts', description = 'Open loadouts menu'})
-		table.insert(options, #options+1, {label = 'Settings', description = 'Settings', icon = "fa-solid fa-gear", disabled = not menu.allowchange, args = {menu = 'settings'}})
+		if menu.private.allowchange then
+			table.insert(options, #options+1, {label = 'Settings', description = 'Settings', icon = "fa-solid fa-gear", args = {menu = 'settings'}})
+		end
 		lib.registerMenu({
 			id = 'policemenu',
 			title = 'Police Menu',
@@ -300,7 +300,7 @@ function CreateMenu()
 	elseif menu.type == 'context' then
 		table.insert(options, {title = 'Actions', description = 'Open action menu', menu = 'policeactionscontext'})
 		table.insert(options, #options+1, {title = 'Loadouts', description = 'Open loadouts menu', menu = 'policeloadoutscontext'})
-		table.insert(options, #options+1, {title = 'Settings', description = 'Settings', icon = "fa-solid fa-gear", disabled = not menu.allowchange, menu = 'policemenusettings'})
+		table.insert(options, #options+1, {title = 'Settings', description = 'Settings', icon = "fa-solid fa-gear", disabled = not menu.private.allowchange, menu = 'policemenusettings'})
 		lib.registerContext({
 			id = 'policecontext',
 			title = 'Police Menu',
@@ -309,7 +309,7 @@ function CreateMenu()
 	elseif menu.type == 'radial' then
 		table.insert(options, {label = 'Actions', menu = 'policeactionsradial'})
 		table.insert(options, #options+1, {label = 'Loadouts', menu = 'policeloadoutsradial'})
-		if menu.allowchange then
+		if menu.private.allowchange then
 			table.insert(options, #options+1, {label = 'Settings', icon = "fa-solid fa-gear", onSelect = function()
 				lib.showContext('policemenusettings')
 			end})
@@ -326,9 +326,11 @@ function CreateMenu()
 			}
 		})
 	end
-
-	if not menu.init then
-		menu.init = true
+	--[[if menu.type ~= 'radial' then
+		lib.removeRadialItem('policeradial')
+	end]]
+	if not menu.private.init then
+		menu.private.init = true
 		if menu.type == 'none' then
 			menu.type = 'menu'
 		end
@@ -342,7 +344,7 @@ function RefreshPerms()
     end
 end
 
-function FuckingCommand()
+function OpenMenuCommand()
     if access then
 		if menu.type == 'menu' or menu.type == 'none' then
 			lib.showMenu("policemenu")
@@ -356,7 +358,7 @@ function FuckingCommand()
     end
 end
 
-RegisterCommand("openpm", FuckingCommand,false)
+RegisterCommand("openpm", OpenMenuCommand,false)
 --End *Menu creation and permissions*
 
 

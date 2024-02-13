@@ -3,7 +3,7 @@ Config = {}
 Config.Closeonaction = false
 Config.CheckVersion = true
 
---WIP
+
 --'none','radial','context','menu'
 --none will allow the player to change the type of menu they want
 Config.ForceType = 'none'
