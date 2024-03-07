@@ -1,4 +1,4 @@
-<h1>Johns Police Menu</h1>
+<h1>Johns Police rework</h1>
 
 <h4>Created by notjohnl (Discord)</h4>
 
@@ -7,7 +7,6 @@
     <li>Add cuffing sounds for when player is cuffed.</li>
     <li>Add cuffing animations.</li>
     <li>Add minigame to allow player a chance to break out of cuffs/drag.</li>
-    <li>Can't think of anything else right now (WIP)</li>
 </ul>
 
 
@@ -71,16 +70,17 @@ add_ace group.sru policemenu.sru allow
 <h4>Installation</h4>
 
 <ol>
-  <li>Download dpemotes <a href="https://github.com/andristum/dpemotes/releases">here</a>. This is a dependency, you need this for the Police Menu.</li>
-  <li>Download johnspolicemenu <a href="https://github.com/chickenlord01/johnspolicemenu">here</a>.</li>
+  <li>Download dpemotes <a href="https://github.com/andristum/dpemotes/releases">here</a>. This is a dependency!</li>
+  <li>Download ox_lib <a href="https://github.com/overextended/ox_lib/releases">here</a>. This is a dependency!</li>
+  <li>Download johnspolicerework <a href="https://github.com/chickenlord01/johnspolicerework/releases">here</a>.</li>
   <li>Extract the folders and upload it to your FiveM server.</li>
-  <li>Add the resources to your server.cfg file. (dpemotes before johnspolicemenu)</li>
+  <li>Add the resources to your server.cfg file. (dpemotes before johnspolicerework)</li>
 </ol>
 
 <h4>Credits</h4>
 
 <ul>
   <li>Thanks to BritishBrotherhood for the spikescripts script: <a href="https://forum.cfx.re/t/release-spike-strips-code-updated-09-03-2019/177461">Link</a></li>
-  <li>Thanks to Warxander for the menu api: <a href="https://forum.cfx.re/t/release-warmenu-lua-menu-framework/41249">Link</a></li>
+  <li>Thanks to the Overextended team for the library: <a href="https://github.com/overextended/ox_lib/releases">Link</a></li>
   <li>If any bug/issue is found please submit it on the github page.</li>
 </ul>
