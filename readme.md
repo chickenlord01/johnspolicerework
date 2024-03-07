@@ -81,6 +81,6 @@ add_ace group.sru policemenu.sru allow
 
 <ul>
   <li>Thanks to BritishBrotherhood for the spikescripts script: <a href="https://forum.cfx.re/t/release-spike-strips-code-updated-09-03-2019/177461">Link</a></li>
-  <li>Thanks to the Overextended team for the library: <a href="https://github.com/overextended/ox_lib/releases">Link</a></li>
+  <li>Thanks to the Overextended team for the library: <a href="https://github.com/overextended">Link</a></li>
   <li>If any bug/issue is found please submit it on the github page.</li>
 </ul>
